@@ -13,24 +13,43 @@ import mapboxgl from "mapbox-gl";
 function App() {
     const mapRef: React.Ref<MapRef> = React.useRef() as React.Ref<MapRef>;
 
-    const [buildingsLayer, setBuildingLayer] = React.useState<
-        mapboxgl.AnyLayer | undefined
-    >();
+    let buildingsGeo = React.useRef<mapboxgl.MapboxGeoJSONFeature[]>([]);
+
+    const logData = () => {
+        const [building] = buildingsGeo.current;
+
+        if (!building) {
+            return;
+        }
+
+        const { sourceLayer, type, layer, id } = building;
+
+        console.log({
+            sourceLayer,
+            type,
+            layer,
+            id,
+            goemetry: building.geometry,
+        });
+    };
 
     const updateMapData = (map: mapboxgl.Map) => {
-        /* eslint-disable  @typescript-eslint/no-non-null-assertion */
-        setBuildingLayer(map.getLayer(buildingsLayerProps.id!));
+        const canvas = map.getCanvasContainer();
+        const rect = canvas.getBoundingClientRect();
 
-        const geo = map.querySourceFeatures("vector-source", {
-            sourceLayer: "buildings",
-        });
+        const bbox: [mapboxgl.PointLike, mapboxgl.PointLike] = [
+            new mapboxgl.Point(rect.left, rect.bottom),
+            new mapboxgl.Point(rect.right, rect.top),
+        ];
+        const geo = map.queryRenderedFeatures(bbox);
+
+        buildingsGeo.current = geo;
     };
 
     const buildingsLayerProps: LayerProps = {
         id: "buildings",
         type: "fill",
         "source-layer": "building",
-        // filter: ["==", "class", "park"],
         paint: {
             "fill-color": "#4E3FC8",
             "fill-opacity": 0.5,
@@ -43,7 +62,9 @@ function App() {
                 return;
             }
 
-            mapRef.current.on("moveend", () => {
+            const map: mapboxgl.Map = mapRef.current;
+
+            map.on("moveend", () => {
                 updateMapData(e.target);
             });
         },
@@ -53,6 +74,10 @@ function App() {
     return (
         <>
             <h1>Fire-hazard App</h1>
+            <button style={{ margin: 10 }} onClick={logData}>
+                {" "}
+                LogData
+            </button>
             <Map
                 ref={mapRef}
                 onLoad={onMapLoad}
@@ -63,7 +88,6 @@ function App() {
                 }}
                 mapboxAccessToken="pk.eyJ1IjoiYm9yLXBsIiwiYSI6ImNqangxenNvNTE1bWQzanAwNnRnOXU0ZWMifQ.xNWlg-CnhTvri40hwUlNdA"
                 style={{ width: "80vw", height: "80vh" }}
-                // mapStyle="mapbox://styles/mapbox/streets-v9"
                 mapStyle="mapbox://styles/mapbox/satellite-v9"
             >
                 <GeolocateControl />
