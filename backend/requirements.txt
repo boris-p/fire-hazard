@@ -3,3 +3,4 @@ flask_cors==3.0.10
 Pillow==9.5.0
 numpy==1.25.0
 shapely===2.0.1
+requests==2.31.0
