@@ -80,17 +80,20 @@ def __add_firestations_distance_and_path(buildings: Dict):
         polygon: Polygon = shape(building["geometry"])
         center: Point = polygon.centroid
 
-        (
-            distance,
-            route,
-            travel_time_traffic,
-        ) = get_distance_from_fire_station(center.y, center.x)
-        building["firestation_distance"] = distance.split(" ")[0]
-        building["firestation_route"] = __route_to_geojson(route)
+        try:
+            (
+                distance,
+                route,
+                travel_time_traffic,
+            ) = get_distance_from_fire_station(center.y, center.x)
+            building["firestation_distance"] = distance.split(" ")[0]
+            building["firestation_route"] = __route_to_geojson(route)
 
-        building["firestation_travel_time"] = travel_time_traffic.split(" ")[0]
+            building["firestation_travel_time"] = travel_time_traffic.split(" ")[0]
 
-        buildings_with_firestations_data[id] = building
+            buildings_with_firestations_data[id] = building
+        except:
+            print('GoogleMaps API request failed')
 
         counter += 1
 

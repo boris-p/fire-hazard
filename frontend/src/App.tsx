@@ -30,7 +30,7 @@ const sendImageData = async (img: string, buildings: any, green: any) => {
 };
 
 const ACCESS_TOKEN =
-  "pk.eyJ1IjoiYm9yLXBsIiwiYSI6ImNqangxenNvNTE1bWQzanAwNnRnOXU0ZWMifQ.xNWlg-CnhTvri40hwUlNdA";
+  "";
 function App() {
   const [calculatedBuildingsData, setCalculatedData] =
     React.useState<any>(null);
@@ -72,7 +72,8 @@ function App() {
         ...building,
         properties: {
           ...building.properties,
-          green_normalizedDistance: building.green_normalizedDistance,
+          green_normalizedDistance: Math.round(building.green_normalizedDistance*1000.0) / 1000.0,
+          normalized_area_dhp: Math.round(building.normalized_area_dhp * 1000.0) / 1000.0
         },
       })),
     };
