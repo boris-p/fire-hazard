@@ -11,6 +11,9 @@ import Map, {
   Source,
 } from "react-map-gl";
 
+import { dataLayer } from "./mapStyle";
+import { heatmapLayer } from "./heatMapStyle";
+
 import { SearchBox } from "@mapbox/search-js-react";
 
 import "./App.css";
@@ -26,8 +29,11 @@ const sendImageData = async (img: string, buildings: any, green: any) => {
   return response;
 };
 
-const ACCESS_TOKEN = "";
+const ACCESS_TOKEN =
+  "pk.eyJ1IjoiYm9yLXBsIiwiYSI6ImNqangxenNvNTE1bWQzanAwNnRnOXU0ZWMifQ.xNWlg-CnhTvri40hwUlNdA";
 function App() {
+  const [calculatedBuildingsData, setCalculatedData] =
+    React.useState<any>(null);
   const mapRef: React.Ref<MapRef> = React.useRef() as React.Ref<MapRef>;
   let buildingsGeo = React.useRef<mapboxgl.MapboxGeoJSONFeature[]>([]);
   let greenlandGeo = React.useRef<mapboxgl.MapboxGeoJSONFeature[]>([]);
@@ -45,22 +51,52 @@ function App() {
       return;
     }
 
+    console.log("buildingsGeo.current", buildingsGeo.current);
+    console.log("buildingsGeo.current length", buildingsGeo.current.length);
     const response = await sendImageData(
       imageString,
       buildingsGeo.current,
       greenlandGeo.current
     );
+    // console.log("response", response);
+
+    const calculated_buildings_data = {
+      type: "FeatureCollection",
+      crs: {
+        type: "calculated_buildings",
+        // properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" },
+      },
+      features: Object.values(response.data).map((building: any) => ({
+        ...building,
+        properties: {
+          ...building.properties,
+          normalizedDistance: building.normalizedDistance,
+        },
+      })),
+    };
+
+    console.log("response.data", response.data);
+    console.log("response.data length", Object.keys(response.data).length);
+    setCalculatedData(calculated_buildings_data);
+    console.log("calculated_buildings_data", calculated_buildings_data);
   };
 
   const updateMapData = (map: mapboxgl.Map) => {
     const canvas = map.getCanvasContainer();
-    const rect = canvas.getBoundingClientRect();
+    // const rect = canvas.getBoundingClientRect();
 
+    const rect = document
+      .getElementsByClassName("mapboxgl-canvas")[0]
+      .getBoundingClientRect();
+
+    console.log("canvas.getClientRects", canvas.getClientRects());
+    console.log("rect", rect);
     const bbox: [mapboxgl.PointLike, mapboxgl.PointLike] = [
-      new mapboxgl.Point(rect.left, rect.bottom),
-      new mapboxgl.Point(rect.right, rect.top),
+      new mapboxgl.Point(0, rect.bottom + rect.top),
+      new mapboxgl.Point(rect.right + rect.left, 0),
     ];
 
+    console.log("bbox", bbox);
     const geo = map.queryRenderedFeatures(bbox);
 
     buildingsGeo.current = geo.filter((g) => g.sourceLayer === "building");
@@ -81,7 +117,7 @@ function App() {
     "source-layer": "building",
     paint: {
       "fill-color": "#4E3FC8",
-      "fill-opacity": 0.5,
+      "fill-opacity": 0.2,
     },
   };
 
@@ -91,7 +127,7 @@ function App() {
     "source-layer": "landuse",
     paint: {
       "fill-color": "#2e6930",
-      "fill-opacity": 0.8,
+      "fill-opacity": 0.1,
     },
   };
 
@@ -101,7 +137,7 @@ function App() {
     "source-layer": "water",
     paint: {
       "fill-color": "#0000ff",
-      "fill-opacity": 1,
+      "fill-opacity": 0,
     },
   };
 
@@ -110,22 +146,29 @@ function App() {
       features,
       point: { x, y },
     } = event;
+    console.log("features", features);
     const hoveredFeature = features && features[0];
     if (!hoveredFeature) {
-      tooltipRef.current.style.top = `-1000px`;
-      tooltipRef.current.style.left = `-1000px`;
+      // tooltipRef.current.style.top = `-1000px`;
+      // tooltipRef.current.style.left = `-1000px`;
 
       return;
     }
     hoverInfo.current = { feature: hoveredFeature, x, y };
 
-    tooltipRef.current.style.top = `${y}px`;
-    tooltipRef.current.style.left = `${x}px`;
-    tooltipRef.current.backgroundColor = `white`;
-    tooltipRef.current.style.color = `gray`;
-    tooltipRef.current.style.position = `absolute`;
+    console.log("hoveredFeature", hoveredFeature);
+    // tooltipRef.current.style.top = `-200px`;
+    // tooltipRef.current.style.left = `0px`;
+    // tooltipRef.current.style.top = `${y}px`;
+    // tooltipRef.current.style.left = `${x}px`;
+    // tooltipRef.current.backgroundColor = `white`;
+    // tooltipRef.current.style.color = `gray`;
+    // tooltipRef.current.style.position = `absolute`;
     // tooltipRef.current.innerHTML = `${hoveredFeature.properties?.class} - ${hoveredFeature.properties?.type}`;
-    tooltipRef.current.innerHTML = `${hoveredFeature.properties?.type}`;
+    // tooltipRef.current.innerHTML = `${hoveredFeature.properties?.type}`;
+    tooltipRef.current.innerHTML = `${
+      hoveredFeature.properties ? JSON.stringify(hoveredFeature.properties) : ""
+    }`;
   };
 
   const onMapLoad = React.useCallback((e: mapboxgl.MapboxEvent<undefined>) => {
@@ -159,6 +202,7 @@ function App() {
         Analyze
       </button>
 
+      <div ref={tooltipRef} className="tooltip"></div>
       <SearchBox
         map={mapRef?.current}
         onRetrieve={handleRetrieve}
@@ -168,7 +212,7 @@ function App() {
         preserveDrawingBuffer={true}
         ref={mapRef}
         onLoad={onMapLoad}
-        // onMouseMove={onHover}
+        onMouseMove={onHover}
         initialViewState={{
           longitude: -122.4,
           latitude: 37.8,
@@ -177,11 +221,16 @@ function App() {
         mapboxAccessToken="pk.eyJ1IjoiYm9yLXBsIiwiYSI6ImNqangxenNvNTE1bWQzanAwNnRnOXU0ZWMifQ.xNWlg-CnhTvri40hwUlNdA"
         style={{ width: "80vw", height: "80vh" }}
         mapStyle="mapbox://styles/mapbox/satellite-v9"
-        interactiveLayerIds={["buildings", "landuse"]}
+        interactiveLayerIds={["calculated-building"]}
       >
         <GeolocateControl />
         <NavigationControl />
         <ScaleControl />
+        {calculatedBuildingsData && (
+          <Source type="geojson" data={calculatedBuildingsData}>
+            <Layer {...dataLayer} />
+          </Source>
+        )}
         <Source
           id="vector-source"
           type="vector"
@@ -191,10 +240,6 @@ function App() {
           <Layer {...landuseLayerProps} />
           <Layer {...waterLayerProps} />
         </Source>
-
-        <div ref={tooltipRef} className="tooltip">
-          tooltip
-        </div>
       </Map>
     </>
   );

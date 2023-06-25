@@ -47,7 +47,7 @@ def get_distance_data(map: Dict):
 
     for id, building in buildings.items():
         building["distance"] = all_distances[id]
-        building["normalizedDistance"] = all_distances[id] / max_distance
+        building["normalizedDistance"] = 1- all_distances[id] / max_distance
         buildings_with_distance[id] = building
 
     return buildings_with_distance
