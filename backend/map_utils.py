@@ -34,14 +34,20 @@ def union_geojsons(objects: List[Dict]):
 
 def get_distance_data(map: Dict):
     buildings: Dict = {shape["id"]: shape for shape in map["buildings"]}
-    grees_multipoly = union_geojsons(map["green"])
+    greens_multipoly = union_geojsons(map["green"])
 
     buildings_with_distance = {}
 
+    all_distances = {
+        id: shape(building["geometry"]).distance(greens_multipoly)
+        for id, building in buildings.items()
+    }
+
+    max_distance = max(list(all_distances.values()))
+
     for id, building in buildings.items():
-        building_poly: Polygon = shape(building["geometry"])
-        distance = building_poly.distance(grees_multipoly)
-        building["distance"] = distance
+        building["distance"] = all_distances[id]
+        building["normalizedDistance"] = all_distances[id] / max_distance
         buildings_with_distance[id] = building
 
     return buildings_with_distance
