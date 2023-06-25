@@ -1,6 +1,6 @@
 import * as React from "react";
 import axios from "axios";
-
+import mapboxgl from "mapbox-gl";
 import Map, {
     GeolocateControl,
     MapRef,
@@ -10,62 +10,40 @@ import Map, {
 } from "react-map-gl";
 
 import "./App.css";
-import mapboxgl from "mapbox-gl";
 
-const sendImage = async (img: string, buildings: any, green: any) => {
+const sendImageData = async (img: string, buildings: any, green: any) => {
     const response = await axios.post("http://127.0.0.1:5000/img", {
         image: img,
         buildings,
         green,
     });
+
+    return response;
 };
 
 function App() {
     const mapRef: React.Ref<MapRef> = React.useRef() as React.Ref<MapRef>;
-
     let buildingsGeo = React.useRef<mapboxgl.MapboxGeoJSONFeature[]>([]);
     let greenlandGeo = React.useRef<mapboxgl.MapboxGeoJSONFeature[]>([]);
     let hoverInfo = React.useRef<any>();
     let tooltipRef = React.useRef<any>(null);
 
-    const saveImage = () => {
-        const map: mapboxgl.Map = mapRef?.current;
-
-        if (!map) {
-            console.log("Map has not loaded yet, can't save image");
-        }
-
-        const image = map.getCanvas().toDataURL();
-
-        sendImage(image, buildingsGeo.current, greenlandGeo.current);
-    };
-
-    const logData = () => {
+    const analyzeMap = async () => {
         const [building] = buildingsGeo.current;
         const [green] = greenlandGeo.current;
+        const map = mapRef.current as mapboxgl.Map;
+        const imageString = map.getCanvas().toDataURL();
 
-        if (building) {
-            console.log({
-                sourceLayer: building.sourceLayer,
-                type: building.type,
-                layer: building.layer,
-                id: building.id,
-                geometry: building.geometry,
-                properties: building.properties,
-            });
-        }
-        if (green) {
-            console.log({
-                sourceLayer: green.sourceLayer,
-                type: green.type,
-                layer: green.layer,
-                id: green.id,
-                geometry: green.geometry,
-                properties: green.properties,
-            });
+        if (!imageString || !building || !green) {
+            alert("Can't analyze image. Missing data");
+            return;
         }
 
-        saveImage();
+        const response = await sendImageData(
+            imageString,
+            buildingsGeo.current,
+            greenlandGeo.current
+        );
     };
 
     const updateMapData = (map: mapboxgl.Map) => {
@@ -155,22 +133,25 @@ function App() {
             map.on("moveend", () => {
                 updateMapData(e.target);
             });
+
+            updateMapData(e.target);
         },
         []
     );
 
-    console.log("hoverInfo?.current", hoverInfo?.current);
     return (
         <>
             <h1>Fire-hazard App</h1>
-            <button style={{ margin: 10 }} onClick={logData}>
+            <button style={{ margin: 10 }} onClick={analyzeMap}>
                 {" "}
-                LogData
+                Analyze
             </button>
+
             <Map
+                preserveDrawingBuffer={true}
                 ref={mapRef}
                 onLoad={onMapLoad}
-                onMouseMove={onHover}
+                // onMouseMove={onHover}
                 initialViewState={{
                     longitude: -122.4,
                     latitude: 37.8,
