@@ -12,4 +12,4 @@ Run
 
 ### Running
 
-> python -m flask run
+> flask --app app.py --debug run
