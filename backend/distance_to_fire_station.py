@@ -2,6 +2,7 @@ import requests
 import datetime
 
 
+# API_KEY = "AIzaSyCbcknKIRAfrDCAZ4hYB7b58W3-xkDh2S8"
 API_KEY = ""
 def __get_location_by_coordinates(lat, lng):
     return {'lat': lat, 'lng': lng}

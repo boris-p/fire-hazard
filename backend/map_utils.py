@@ -50,7 +50,7 @@ def __add_building_to_green_distance(buildings: Dict, green: List[Dict]):
 
     for id, building in buildings.items():
         building["green_distance"] = all_distances[id]
-        building["green_normalizedDistance"] = all_distances[id] / max_distance
+        building["green_normalizedDistance"] = 1 - all_distances[id] / max_distance
         buildings_with_distance[id] = building
 
     return buildings_with_distance

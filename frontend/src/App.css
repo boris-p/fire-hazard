@@ -42,5 +42,11 @@
 }
 
 .tooltip {
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.914);
+  /* display: absolute; */
+  color: gray;
+  /* top: 200px; */
+  /* padding: 10px; */
+  /* right: 0; */
+  /* z-index: 100; */
 }
