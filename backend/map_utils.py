@@ -9,6 +9,7 @@ from shapely.ops import unary_union
 from shapely import to_geojson
 
 from distance_to_fire_station import get_distance_from_fire_station
+from collapse_time import element_failure_DHP, MATERIALS
 
 
 def save_image(image_data: str, name: str = "tmp_image"):
@@ -96,6 +97,30 @@ def __add_firestations_distance_and_path(buildings: Dict):
     return buildings_with_firestations_data
 
 
+def __add_collapse_time(buildings: Dict):
+    bulidings_with_collapse_time = {}
+
+    collapse_coeff = element_failure_DHP(MATERIALS[0])
+    print(f"Element failure DHP: {collapse_coeff}")
+
+    all_areas_dhp = {}
+
+    for id, building in buildings.items():
+        poly = shape(building["geometry"])
+        area = poly.area * 1000000
+        all_areas_dhp[id] = area
+
+    max_area_dhp = max(list(all_areas_dhp.values()))
+    print(f"Max area dhp: {max_area_dhp}")
+
+    for id, building in buildings.items():
+        building["area_dhp"] = all_areas_dhp[id]
+        building["normalized_area_dhp"] = 1 - all_areas_dhp[id] / max_area_dhp
+        bulidings_with_collapse_time[id] = building
+
+    return bulidings_with_collapse_time
+
+
 def analyze_buildings(map_: Dict):
     buildings: Dict = {shape["id"]: shape for shape in map_["buildings"]}
 
@@ -107,4 +132,8 @@ def analyze_buildings(map_: Dict):
         buildings_with_green_data
     )
 
-    return buildings_with_firestations_data
+    bulidings_with_collapse_time = __add_collapse_time(
+        buildings_with_firestations_data
+    )
+
+    return bulidings_with_collapse_time
