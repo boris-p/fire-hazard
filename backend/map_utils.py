@@ -4,7 +4,7 @@ import base64
 from typing import Dict, List
 
 from PIL import Image
-from shapely.geometry import shape, Polygon
+from shapely.geometry import shape
 from shapely.ops import unary_union
 
 
