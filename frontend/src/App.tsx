@@ -28,6 +28,22 @@ function App() {
     let hoverInfo = React.useRef<any>();
     let tooltipRef = React.useRef<any>(null);
 
+    const applyFeatures = (buildings: Record<string, any> = {}) => {
+        // debugger;
+        const map = mapRef.current as mapboxgl.Map;
+
+        Object.entries(buildings).forEach(([id, building]) => {
+            map.setFeatureState(
+                { id, source: "vector-source", sourceLayer: "building" },
+                {
+                    dist: building["normalizedDistance"], // * 255, //.toString(16),
+                }
+            );
+
+            console.log(`setting color for id ${id}`);
+        });
+    };
+
     const analyzeMap = async () => {
         const [building] = buildingsGeo.current;
         const [green] = greenlandGeo.current;
@@ -44,6 +60,8 @@ function App() {
             buildingsGeo.current,
             greenlandGeo.current
         );
+
+        applyFeatures(response.data);
     };
 
     const updateMapData = (map: mapboxgl.Map) => {
@@ -70,12 +88,19 @@ function App() {
     };
 
     const buildingsLayerProps: LayerProps = {
-        id: "buildings",
+        id: "building",
         type: "fill",
         "source-layer": "building",
         paint: {
             "fill-color": "#4E3FC8",
-            "fill-opacity": 0.5,
+            // "fill-color": ["rgb", ["feature-state", "dist"], 0, 0],
+            // "fill-opacity": 0.5,
+            "fill-opacity": [
+                "case",
+                ["has", "dist"],
+                ["feature-state", "dist"],
+                0.5,
+            ],
         },
     };
 
@@ -160,7 +185,7 @@ function App() {
                 mapboxAccessToken="pk.eyJ1IjoiYm9yLXBsIiwiYSI6ImNqangxenNvNTE1bWQzanAwNnRnOXU0ZWMifQ.xNWlg-CnhTvri40hwUlNdA"
                 style={{ width: "80vw", height: "80vh" }}
                 mapStyle="mapbox://styles/mapbox/satellite-v9"
-                interactiveLayerIds={["buildings", "landuse"]}
+                interactiveLayerIds={["building", "landuse"]}
             >
                 <GeolocateControl />
                 <Source
