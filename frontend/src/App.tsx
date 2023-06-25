@@ -58,19 +58,21 @@ function App() {
       buildingsGeo.current,
       greenlandGeo.current
     );
-    // console.log("response", response);
+    console.log("response", response);
 
+    console.log("building", building);
     const calculated_buildings_data = {
       type: "FeatureCollection",
       crs: {
         type: "calculated_buildings",
         // properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" },
       },
+
       features: Object.values(response.data).map((building: any) => ({
         ...building,
         properties: {
           ...building.properties,
-          normalizedDistance: building.normalizedDistance,
+          green_normalizedDistance: building.green_normalizedDistance,
         },
       })),
     };

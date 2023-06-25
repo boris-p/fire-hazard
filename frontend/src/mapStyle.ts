@@ -6,7 +6,7 @@ export const dataLayer: FillLayer = {
   type: "fill",
   paint: {
     "fill-color": {
-      property: "normalizedDistance",
+      property: "green_normalizedDistance",
       stops: [
         [0, "#3288bd"],
         [0.1, "#66c2a5"],

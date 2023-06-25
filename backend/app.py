@@ -1,6 +1,6 @@
 from flask import Flask, request
 from flask_cors import CORS
-from map_utils import save_image, save_json, get_distance_data
+from map_utils import save_image, save_json, analyze_buildings
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -15,7 +15,7 @@ def home():
 def process_image():
     save_image(request.json["image"], "input_image")
     save_json(request.json, "input_data")
-    buildings_with_distance = get_distance_data(request.json)
+    buildings_with_distance = analyze_buildings(request.json)
     save_json(buildings_with_distance, "output_data")
 
     return buildings_with_distance
