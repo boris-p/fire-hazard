@@ -100,7 +100,7 @@ def __add_firestations_distance_and_path(buildings: Dict):
 def __add_collapse_time(buildings: Dict):
     bulidings_with_collapse_time = {}
 
-    collapse_coeff = element_failure_DHP(MATERIALS[0])
+    collapse_coeff = element_failure_DHP(MATERIALS[2])
     print(f"Element failure DHP: {collapse_coeff}")
 
     all_areas_dhp = {}
